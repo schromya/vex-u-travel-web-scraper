@@ -1,6 +1,10 @@
 import requests
 from bs4 import BeautifulSoup
-from google_flight_analysis.scrape import Scrape
+from google_flight_analysis.scrape import *
+from datetime import datetime
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+
 
 class Competition():
     def __init__(self, url):
@@ -64,7 +68,16 @@ def scrape_google_flights(comp:Competition):
 
     # Scrapes Google Flights for round-trip JFK to IST, leave July 15, 2023, return July 25, 2023.
     print(comp.date_start, comp.date_end)
-    result = Scrape(SOURCE, "SEA", comp.date_start, comp.date_end)
+    start = datetime.strptime(comp.date_start, '%d-%b-%Y').strftime('%Y-%m-%d')
+    end = datetime.strptime(comp.date_end, '%d-%b-%Y').strftime('%Y-%m-%d')
+    print(start, end)
+    #result = Scrape("ANC", "SEA", comp.date_start, comp.date_end)
+    #result = Scrape('JFK', 'IST', start, end)
+
+    result = Scrape('ANC', 'SEA', '2023-07-20', '2023-08-20')
+    ScrapeObjects(result) # runs selenium through ChromeDriver, modifies results in-place
+    result.data # returns pandas DF
+    print(result) # get queried representation of result
 
     # Obtain data + info
     flights = result.data # outputs as a Pandas dataframe
@@ -86,7 +99,7 @@ def scrape_robot_events_page() -> [Competition]:
                 comp = Competition(link)
                 competitions.append(comp)
                 scrape_robot_events_competition_page(comp)
-                #scrape_google_flights(comp)
+                scrape_google_flights(comp)
     else:
         print("Bad Response")
                 
@@ -96,7 +109,6 @@ def scrape_robot_events_page() -> [Competition]:
 def to_csv(competitions:[Competition]) -> None:
     file_name = "Competitions.csv"
     if len(competitions) >= 1:
-        print(competitions)
         # Write heading
         heading = ""
         for attribute in competitions[0].get_attributes():
